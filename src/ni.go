@@ -17,15 +17,33 @@ const (
 )
 
 func Ni() {
+	file, _ := os.Open("input/ni.txt")
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	input := scanner.Text()
+
+	split := strings.Split(input, ",")
+
+	initialMemory := make([]int, len(split))
+	for i, value := range split {
+		initialMemory[i], _ = strconv.Atoi(value)
+	}
+
+	memory := make([]int, len(initialMemory))
+
 	{
-		result := runComputer(12, 2)
+		copy(memory, initialMemory)
+		result := runComputer(memory, 12, 2)
 		fmt.Println("part 1:", result)
 	}
 
 	{
 		for noun := 0; noun < 100; noun++ {
 			for verb := 0; verb < 100; verb++ {
-				result := runComputer(noun, verb)
+				copy(memory, initialMemory)
+				result := runComputer(memory, noun, verb)
 				if result == 19690720 {
 					fmt.Println("part 2:", 100*noun+verb)
 				}
@@ -34,20 +52,7 @@ func Ni() {
 	}
 }
 
-func runComputer(noun, verb int) int {
-	file, _ := os.Open("input/ni.txt")
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	input := scanner.Text()
-	split := strings.Split(input, ",")
-
-	memory := make([]int, len(split))
-	for i, value := range split {
-		memory[i], _ = strconv.Atoi(value)
-	}
-
+func runComputer(memory []int, noun, verb int) int {
 	memory[1] = noun
 	memory[2] = verb
 
