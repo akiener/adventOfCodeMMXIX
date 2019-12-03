@@ -7,6 +7,6 @@ func main() {
 	case 2:
 		Ni()
 	case 3:
-		San()
+		San2()
 	}
 }
