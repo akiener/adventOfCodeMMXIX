@@ -118,17 +118,23 @@ func San() {
 	for i := 0; i < len(gridLines[1]); i++ {
 
 	}
-
 	manhattenDistances := map[Coordinate]int{}
-
+	const MaxInt = int(^uint(0) >> 1)
+	minDistance := MaxInt
 	for k, v := range grid {
 		if v == 3 {
-			manhattenDistances[k] = manhattenDistance(k)
-			fmt.Println(k)
+			manhattenDistances[k] = int(abs(int64(k.x))) + int(abs(int64(k.y)))
+			if manhattenDistances[k] == 0 {
+				continue
+			}
+			fmt.Println(k, manhattenDistances[k])
+			if manhattenDistances[k] < minDistance {
+				minDistance = manhattenDistances[k]
+			}
 		}
 	}
 
-	print(dirs)
+	print(minDistance)
 
 	{
 	}
@@ -137,8 +143,8 @@ func San() {
 	}
 }
 
-func manhattenDistance(pos Coordinate) int {
-
+func manhattenDistance(pos Coordinate) int64 {
+	return abs(int64(pos.x)) + abs(int64(pos.y))
 }
 
 func intersects(one CoordinateLine, two CoordinateLine) (bool, Coordinate) {
@@ -155,4 +161,9 @@ func intersects(one CoordinateLine, two CoordinateLine) (bool, Coordinate) {
 		}
 	}
 	return false, Coordinate{}
+}
+
+func abs(n int64) int64 {
+	y := n >> 63
+	return (n ^ y) - y
 }
