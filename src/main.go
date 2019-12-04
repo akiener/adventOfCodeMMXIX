@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	switch problemIndex := 3; problemIndex {
+	switch problemIndex := 4; problemIndex {
 	case 1:
 		Ichi()
 	case 2:
@@ -22,5 +22,7 @@ func main() {
 			lines += "\n"
 		}
 		San(lines)
+	case 4:
+		Yon()
 	}
 }

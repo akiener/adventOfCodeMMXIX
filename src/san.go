@@ -166,6 +166,8 @@ func San(input string) (int, int) {
 
 	combinedSteps := stepsUntilIntersection0 + stepsUntilIntersection1
 
+	fmt.Println("stepsUntilIntersection0:", stepsUntilIntersection0)
+	fmt.Println("stepsUntilIntersection1:", stepsUntilIntersection1)
 	fmt.Println("part2:", combinedSteps)
 	return minManhattenDistance, combinedSteps
 }
