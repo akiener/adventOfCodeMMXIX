@@ -4,7 +4,35 @@ import kotlin.system.exitProcess
 import kotlin.test.assertEquals
 
 fun main() {
-    val file = File("input/05")
+    var maximumOutput = Pair(Int.MIN_VALUE, listOf<Int>())
+    for (a in 0 until 5) {
+        for (b in 0 until 5) {
+            for (c in 0 until 5) {
+                for (d in 0 until 5) {
+                    for (e in 0 until 5) {
+                        if (listOf(a, b, c, d, e).toSet().size < 5) {
+                            continue
+                        }
+                        val outputA = runAmplifier(a, 0)
+                        val outputB = runAmplifier(b, outputA)
+                        val outputC = runAmplifier(c, outputB)
+                        val outputD = runAmplifier(d, outputC)
+                        val outputE = runAmplifier(e, outputD)
+                        println("possible output: $outputE")
+                        if (outputE > maximumOutput.first) {
+                            maximumOutput = outputE to listOf(a, b, c, d, e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    println("part1: $maximumOutput")
+}
+
+private fun runAmplifier(position: Int, input: Int): Int {
+    val file = File("input/07")
     val lines = file.readLines()
 
     assertEquals(lines.size, 1)
@@ -12,6 +40,7 @@ fun main() {
     val memory = lines[0].split(",").map { Integer.parseInt(it) }.toMutableList()
 
     var i = 0
+    var firstInputUsed = false
     while (i < memory.size) {
         val ins = memory[i]
 
@@ -31,13 +60,17 @@ fun main() {
                 i += 4
             }
             3 -> { // Save input to position
-                print("input please: ")
-                memory.write(m1, i + 1, Integer.parseInt(readLine()))
+                if (!firstInputUsed) {
+                    memory.write(m1, i + 1, position)
+                    firstInputUsed = true
+                } else {
+                    memory.write(m1, i + 1, input)
+                }
                 i += 2
             }
             4 -> { // Output from position
                 val output = memory.read(m1, i + 1)
-                println("output: $output")
+                return output
                 i += 2
             }
             5 -> {
@@ -80,6 +113,7 @@ fun main() {
     }
 
     println(memory)
+    throw Exception("Did not expect program to run to here")
 }
 
 private fun MutableList<Int>.write(modeImmediate: Boolean, i: Int, value: Int) {
