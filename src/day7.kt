@@ -13,31 +13,60 @@ fun main() {
                         if (listOf(a, b, c, d, e).toSet().size < 5) {
                             continue
                         }
-                        val outputA = runAmplifier(a, 0)
-                        val outputB = runAmplifier(b, outputA)
-                        val outputC = runAmplifier(c, outputB)
-                        val outputD = runAmplifier(d, outputC)
-                        val outputE = runAmplifier(e, outputD)
-                        println("possible output: $outputE")
-                        if (outputE > maximumOutput.first) {
-                            maximumOutput = outputE to listOf(a, b, c, d, e)
+                        var memoryA = mutableListOf<Int>()
+                        var memoryB = mutableListOf<Int>()
+                        var memoryC = mutableListOf<Int>()
+                        var memoryD = mutableListOf<Int>()
+                        var memoryE = mutableListOf<Int>()
+                        var outputA = 0
+                        var outputB = 0
+                        var outputC = 0
+                        var outputD = 0
+                        var outputE = 0
+
+                        for (x in 0..29) {
+                            val resA = runAmplifier(memoryA, a + 5, outputE)
+                            memoryA = resA.first
+                            outputA = resA.second
+                            val resB = runAmplifier(memoryB, b + 5, outputA)
+                            memoryB = resB.first
+                            outputB = resB.second
+                            val resC = runAmplifier(memoryC, c + 5, outputB)
+                            memoryC = resC.first
+                            outputC = resC.second
+                            val resD = runAmplifier(memoryD, d + 5, outputC)
+                            memoryD = resD.first
+                            outputD = resD.second
+                            val resE = runAmplifier(memoryE, e + 5, outputD)
+                            memoryE = resE.first
+                            outputE = resE.second
                         }
+
+                        println("possible output: ${outputE to listOf(a + 5, b + 5, c + 5, d + 5, e + 5)}")
+                        if (outputE > maximumOutput.first) {
+                            maximumOutput = outputE to listOf(a + 5, b + 5, c + 5, d + 5, e + 5)
+                        }
+                        exitProcess(0)
                     }
                 }
             }
         }
     }
 
-    println("part1: $maximumOutput")
+    println("part2: $maximumOutput")
 }
 
-private fun runAmplifier(position: Int, input: Int): Int {
-    val file = File("input/07")
-    val lines = file.readLines()
+private fun runAmplifier(inputMemory: MutableList<Int>, position: Int, input: Int): Pair<MutableList<Int>, Int> {
+    val memory = if (inputMemory.isEmpty()) {
+        val file = File("input/07test")
+        val lines = file.readLines()
 
-    assertEquals(lines.size, 1)
+        assertEquals(lines.size, 1)
 
-    val memory = lines[0].split(",").map { Integer.parseInt(it) }.toMutableList()
+        lines[0].split(",").map { Integer.parseInt(it) }.toMutableList()
+    } else {
+        inputMemory
+    }
 
     var i = 0
     var firstInputUsed = false
@@ -70,7 +99,7 @@ private fun runAmplifier(position: Int, input: Int): Int {
             }
             4 -> { // Output from position
                 val output = memory.read(m1, i + 1)
-                return output
+                return memory to output
                 i += 2
             }
             5 -> {
