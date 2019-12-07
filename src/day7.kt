@@ -1,9 +1,10 @@
 import java.io.File
 import java.lang.Exception
-import kotlin.system.exitProcess
 import kotlin.test.assertEquals
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 
-fun main() {
+fun main() = runBlocking {
     var maximumOutput = Pair(Int.MIN_VALUE, listOf<Int>())
     for (a in 0 until 5) {
         for (b in 0 until 5) {
@@ -13,40 +14,45 @@ fun main() {
                         if (listOf(a, b, c, d, e).toSet().size < 5) {
                             continue
                         }
-                        var memoryA = mutableListOf<Int>()
-                        var memoryB = mutableListOf<Int>()
-                        var memoryC = mutableListOf<Int>()
-                        var memoryD = mutableListOf<Int>()
-                        var memoryE = mutableListOf<Int>()
-                        var outputA = 0
-                        var outputB = 0
-                        var outputC = 0
-                        var outputD = 0
-                        var outputE = 0
 
-                        for (x in 0..29) {
-                            val resA = runAmplifier(memoryA, a + 5, outputE)
-                            memoryA = resA.first
-                            outputA = resA.second
-                            val resB = runAmplifier(memoryB, b + 5, outputA)
-                            memoryB = resB.first
-                            outputB = resB.second
-                            val resC = runAmplifier(memoryC, c + 5, outputB)
-                            memoryC = resC.first
-                            outputC = resC.second
-                            val resD = runAmplifier(memoryD, d + 5, outputC)
-                            memoryD = resD.first
-                            outputD = resD.second
-                            val resE = runAmplifier(memoryE, e + 5, outputD)
-                            memoryE = resE.first
-                            outputE = resE.second
+                        val channelAtoB = Channel<Int>()
+                        val channelBtoC = Channel<Int>()
+                        val channelCtoD = Channel<Int>()
+                        val channelDtoE = Channel<Int>()
+                        val channelEtoA = Channel<Int>()
+
+                        val ampA = launch {
+                            runAmplifier(a + 5, channelEtoA, channelAtoB)
+                        }
+                        val ampB = launch {
+                            runAmplifier(b + 5, channelAtoB, channelBtoC)
+                        }
+                        val ampC = launch {
+                            runAmplifier(c + 5, channelBtoC, channelCtoD)
+                        }
+                        val ampD = launch {
+                            runAmplifier(d + 5, channelCtoD, channelDtoE)
+                        }
+                        val ampE = launch {
+                            runAmplifier(e + 5, channelDtoE, channelEtoA)
                         }
 
-                        println("possible output: ${outputE to listOf(a + 5, b + 5, c + 5, d + 5, e + 5)}")
-                        if (outputE > maximumOutput.first) {
-                            maximumOutput = outputE to listOf(a + 5, b + 5, c + 5, d + 5, e + 5)
+
+                        GlobalScope.launch {
+                            channelEtoA.send(0)
                         }
-                        exitProcess(0)
+
+                        ampA.join()
+                        ampB.join()
+                        ampC.join()
+                        ampD.join()
+                        val finalOutput = channelEtoA.receive()
+                        ampE.join()
+
+//                        println("possible output: ${finalOutput to listOf(a + 5, b + 5, c + 5, d + 5, e + 5)}")
+                        if (finalOutput > maximumOutput.first) {
+                            maximumOutput = finalOutput to listOf(a + 5, b + 5, c + 5, d + 5, e + 5)
+                        }
                     }
                 }
             }
@@ -56,17 +62,13 @@ fun main() {
     println("part2: $maximumOutput")
 }
 
-private fun runAmplifier(inputMemory: MutableList<Int>, position: Int, input: Int): Pair<MutableList<Int>, Int> {
-    val memory = if (inputMemory.isEmpty()) {
-        val file = File("input/07test")
-        val lines = file.readLines()
+private suspend fun runAmplifier(position: Int, channelInput: Channel<Int>, channelOutput: Channel<Int>) {
+    val file = File("input/07")
+    val lines = file.readLines()
 
-        assertEquals(lines.size, 1)
+    assertEquals(lines.size, 1)
 
-        lines[0].split(",").map { Integer.parseInt(it) }.toMutableList()
-    } else {
-        inputMemory
-    }
+    val memory = lines[0].split(",").map { Integer.parseInt(it) }.toMutableList()
 
     var i = 0
     var firstInputUsed = false
@@ -93,13 +95,16 @@ private fun runAmplifier(inputMemory: MutableList<Int>, position: Int, input: In
                     memory.write(m1, i + 1, position)
                     firstInputUsed = true
                 } else {
+                    val input = channelInput.receive()
+//                    println("$position recv $input")
                     memory.write(m1, i + 1, input)
                 }
                 i += 2
             }
             4 -> { // Output from position
                 val output = memory.read(m1, i + 1)
-                return memory to output
+//                println("$position send $output")
+                channelOutput.send(output)
                 i += 2
             }
             5 -> {
@@ -133,9 +138,9 @@ private fun runAmplifier(inputMemory: MutableList<Int>, position: Int, input: In
                 i += 4
             }
             99 -> {
-                println(memory)
-                println("terminated normally")
-                exitProcess(0)
+//                println(memory)
+//                println("amplifier $position terminated normally")
+                return
             }
             else -> throw Exception("operation $opcode unknown")
         }

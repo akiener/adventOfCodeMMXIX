@@ -1,5 +1,6 @@
 # Default ignored files
 
-advendOfCodeMMXIX.iml
+adventOfCodeMMXIX.iml
 .idea
 out
+.gradle
